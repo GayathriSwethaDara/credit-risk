@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Credit Risk Assessment</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { padding: 20px; }
+        .form-container { max-width: 800px; margin: 0 auto; }
+        .result-card { display: none; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container form-container">
+        <h1 class="text-center mb-4">Credit Risk Assessment</h1>
+        
+        <form id="creditForm">
+            <div class="row g-3">
+                <!-- Personal Info -->
+                <div class="col-md-6">
+                    <label class="form-label">Age</label>
+                    <input type="number" class="form-control" name="age" min="18" max="100" required>
+                </div>
+                
+                <div class="col-md-6">
+                    <label class="form-label">Sex</label>
+                    <select class="form-select" name="sex" required>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                </div>
+                
+                <!-- Employment -->
+                <div class="col-md-6">
+                    <label class="form-label">Job</label>
+                    <select class="form-select" name="job" required>
+                        <option value="0">Unskilled</option>
+                        <option value="1">Skilled</option>
+                        <option value="2">Highly Skilled</option>
+                        <option value="3">Professional</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-6">
+                    <label class="form-label">Housing</label>
+                    <select class="form-select" name="housing" required>
+                        <option value="own">Own</option>
+                        <option value="rent">Rent</option>
+                        <option value="free">Free</option>
+                    </select>
+                </div>
+                
+                <!-- Financial Info -->
+                <div class="col-md-6">
+                    <label class="form-label">Saving Accounts</label>
+                    <select class="form-select" name="saving_accounts" required>
+                        <option value="na">NA</option>
+                        <option value="little">Little</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="quite rich">Quite Rich</option>
+                        <option value="rich">Rich</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-6">
+                    <label class="form-label">Checking Account</label>
+                    <select class="form-select" name="checking_account" required>
+                        <option value="little">Little</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="rich">Rich</option>
+                    </select>
+                </div>
+                
+                <!-- Loan Details -->
+                <div class="col-md-6">
+                    <label class="form-label">Credit Amount (€)</label>
+                    <input type="number" class="form-control" name="credit_amount" min="100" step="100" required>
+                </div>
+                
+                <div class="col-md-6">
+                    <label class="form-label">Duration (months)</label>
+                    <input type="number" class="form-control" name="duration" min="1" max="120" required>
+                </div>
+                
+                <div class="col-12">
+                    <label class="form-label">Purpose</label>
+                    <select class="form-select" name="purpose" required>
+                        <option value="car">Car</option>
+                        <option value="furniture/equipment">Furniture/Equipment</option>
+                        <option value="radio/TV">Radio/TV</option>
+                        <option value="domestic appliances">Domestic Appliances</option>
+                        <option value="repairs">Repairs</option>
+                        <option value="education">Education</option>
+                        <option value="business">Business</option>
+                        <option value="vacation/others">Vacation/Others</option>
+                    </select>
+                </div>
+                
+                <div class="col-12 text-center mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">Assess Risk</button>
+                </div>
+            </div>
+        </form>
+        
+        <div id="resultCard" class="card result-card mt-4">
+            <div class="card-body text-center">
+                <h4 class="card-title">Risk Assessment Result</h4>
+                <div class="mt-3">
+                    <p class="fs-5"><strong>Risk Level:</strong> <span id="riskLevel"></span></p>
+                    <p class="fs-5"><strong>Probability:</strong> <span id="probability"></span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('creditForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const form = e.target;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+            
+            try {
+                const formData = new FormData(form);
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    document.getElementById('riskLevel').textContent = result.prediction;
+                    document.getElementById('probability').textContent = result.probability;
+                    
+                    // Style based on risk level
+                    const resultCard = document.getElementById('resultCard');
+                    resultCard.style.display = 'block';
+                    resultCard.className = result.prediction === 'Low Risk' 
+                        ? 'card result-card mt-4 bg-success text-white'
+                        : 'card result-card mt-4 bg-danger text-white';
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                alert('An error occurred. Please try again.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Assess Risk';
+            }
+        });
+    </script>
+</body>
+</html>
